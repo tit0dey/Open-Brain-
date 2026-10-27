@@ -4,6 +4,9 @@ build/
 coverage/
 downloads/
 *.zip
+*.apk
+*.jks
+*.keystore
 .DS_Store
 *.log
 tmp-*.pdf

@@ -92,6 +92,11 @@ function showToast(message) {
 
 async function copyTextToClipboard(text, label = 'Copied to clipboard') {
   try {
+    if (typeof window !== 'undefined' && typeof window.KdpAndroidBridge?.copyText === 'function') {
+      window.KdpAndroidBridge.copyText(String(text));
+      showToast(label);
+      return;
+    }
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);
     } else {
@@ -110,7 +115,39 @@ async function copyTextToClipboard(text, label = 'Copied to clipboard') {
   }
 }
 
-function downloadBlob(bytesOrText, filename, mimeType) {
+function bytesToBase64(uint8) {
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < uint8.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, uint8.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+async function downloadBlob(bytesOrText, filename, mimeType) {
+  if (
+    typeof window !== 'undefined' &&
+    typeof window.KdpAndroidBridge?.saveBase64File === 'function'
+  ) {
+    let bytes;
+    if (bytesOrText instanceof Uint8Array) {
+      bytes = bytesOrText;
+    } else if (bytesOrText instanceof Blob) {
+      bytes = new Uint8Array(await bytesOrText.arrayBuffer());
+    } else {
+      bytes = new TextEncoder().encode(String(bytesOrText));
+    }
+    const ok = window.KdpAndroidBridge.saveBase64File(
+      bytesToBase64(bytes),
+      filename,
+      mimeType || 'application/octet-stream'
+    );
+    if (ok) {
+      showToast(`Saved to Downloads: ${filename}`);
+    }
+    return;
+  }
+
   const blob =
     bytesOrText instanceof Blob
       ? bytesOrText
@@ -1531,6 +1568,7 @@ function bindEvents() {
    ========================================================================== */
 
 function registerOfflineServiceWorker() {
+  if (typeof window !== 'undefined' && window.KdpAndroidBridge) return;
   if (!('serviceWorker' in navigator)) return;
   if (!window.location.protocol.startsWith('http')) return;
   window.addEventListener('load', () => {
@@ -1564,5 +1602,17 @@ async function initApp() {
   // the entire studio can be verified and downloaded in under a minute.
   await buildBothPdfsAndInspectAction();
 }
+
+window.__kdpHandleAndroidBack = function () {
+  if (!$('confirm-modal').hidden) {
+    closeConfirmModal(false);
+    return true;
+  }
+  if (state.step > 0) {
+    setStep(state.step - 1);
+    return true;
+  }
+  return false;
+};
 
 initApp();

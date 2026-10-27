@@ -81,10 +81,29 @@ It requires **no backend, no API keys, no paid services, no telemetry, no build 
 │   ├── icon.svg                # Vector app emblem
 │   ├── icon-192.png            # Android home-screen icon (192x192)
 │   └── icon-512.png            # Android splash/install icon (512x512)
+├── android/
+│   ├── AndroidManifest.xml     # Zero-permission offline Android manifest (API 24–34+)
+│   ├── build-apk.py            # Reproducible AAPT2 + ECJ + D8 + 4-byte zipalign + V2/V3 APK builder
+│   ├── res/                    # Launcher mipmap icons, strings & Material NoActionBar theme
+│   └── src/studio/kdp/app/
+│       └── MainActivity.java   # Offline asset WebView, MediaStore Downloads & file chooser bridge
 └── tests/
     ├── layout-math.test.mjs    # Unit tests for gutter, margins, bleed, spine, cover & pricing math
     └── verify-pdfs.mjs         # End-to-end headless PDF generation, binary preflight & zero-emoji check
 ```
+
+---
+
+## Native Android APK (Offline App)
+
+KDP Studio can also be installed directly as a standalone Android `.apk` (`package="studio.kdp.app"`, Android 7.0 / API 24 through Android 15+):
+
+- **100% Offline & Zero Permissions**: Declares **no `INTERNET` permission** in `AndroidManifest.xml`. All HTML, CSS, ES modules, vendored `pdf-lib`/`fontkit`, and OFL fonts are bundled inside `assets/www/` and served from `https://appassets.androidplatform.net/`.
+- **Native Downloads & File Picker**: Exporting an Interior PDF, Cover PDF, or `.json` project saves directly to Android's **Downloads** folder via `MediaStore.Downloads` (`KdpAndroidBridge`), and `<input type="file">` opens Android's native system file picker for `.md`, `.txt`, `.json`, and cover images.
+- **How to Install on Android**:
+  1. Transfer or download `kdp-studio.apk` to your Android phone.
+  2. Tap `kdp-studio.apk` in your **Files** or **Downloads** app.
+  3. If prompted, allow **Install unknown apps** for your browser or Files app, then tap **Install**.
 
 ---
 

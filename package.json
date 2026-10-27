@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "test": "node --test tests/layout-math.test.mjs tests/verify-pdfs.mjs",
-    "serve": "python3 -m http.server 8080 --bind 0.0.0.0"
+    "serve": "python3 -m http.server 8080 --bind 0.0.0.0",
+    "build:apk": "python3 android/build-apk.py"
   },
   "license": "MIT"
 }
