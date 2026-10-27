@@ -18,7 +18,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ANDROID_DIR = REPO_ROOT / "android"
-OUTPUT_APK = REPO_ROOT / "downloads" / "kdp-studio.apk"
+OUTPUT_APK = REPO_ROOT / "kdp-studio.apk"
+DOWNLOADS_APK = REPO_ROOT / "downloads" / "kdp-studio.apk"
 
 TOOLS_ROOT = Path(os.environ.get("APK_TOOLS_DIR", "/tmp/apk-tools"))
 SDK_DIR = TOOLS_ROOT / "sdk"
@@ -304,6 +305,8 @@ def build():
         ])
         print(badging.strip())
 
+    DOWNLOADS_APK.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(OUTPUT_APK, DOWNLOADS_APK)
     size_kb = OUTPUT_APK.stat().st_size / 1024
     print(f"\nSUCCESS: Built signed Android APK -> {OUTPUT_APK} ({size_kb:.1f} KB)")
 

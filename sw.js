@@ -4,7 +4,7 @@
  * KDP Studio works 100% offline on Android ("Add to Home Screen").
  */
 
-const CACHE_NAME = 'kdp-studio-v1';
+const CACHE_NAME = 'kdp-studio-v2';
 
 const PRECACHE_ASSETS = [
   './',
@@ -63,6 +63,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const reqUrl = new URL(event.request.url);
   if (reqUrl.origin !== self.location.origin) return;
+  if (/\.(apk|zip)$/i.test(reqUrl.pathname)) return;
 
   event.respondWith(
     caches.match(event.request).then((cached) => {

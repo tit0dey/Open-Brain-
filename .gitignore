@@ -5,6 +5,7 @@ coverage/
 downloads/
 *.zip
 *.apk
+!kdp-studio.apk
 *.jks
 *.keystore
 .DS_Store
