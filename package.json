@@ -1,0 +1,13 @@
+{
+  "name": "kdp-studio",
+  "version": "1.0.0",
+  "description": "Offline-first Amazon KDP paperback production studio running completely in the browser.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/layout-math.test.mjs tests/verify-pdfs.mjs",
+    "serve": "python3 -m http.server 8080 --bind 0.0.0.0",
+    "build:apk": "python3 android/build-apk.py"
+  },
+  "license": "MIT"
+}
