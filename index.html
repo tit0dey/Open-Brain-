@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#161C28" />
+  <meta name="description" content="KDP Studio — Complete offline Amazon KDP paperback production tool in your mobile browser." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>KDP Studio — Paperback Production</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./styles/main.css" />
+</head>
+<body>
+  <!-- Sticky Studio Header -->
+  <header class="studio-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-mark" id="brand-icon" aria-hidden="true"></span>
+        <div style="min-width: 0;">
+          <h1 class="brand-title">KDP Studio</h1>
+          <p class="brand-subtitle" id="save-status">Offline-first · Saved locally</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" class="btn btn-icon" id="btn-export-json" title="Export project (.json)" aria-label="Export project as JSON"></button>
+        <label class="btn btn-icon file-btn" id="lbl-import-json" title="Import project (.json)" aria-label="Import project JSON">
+          <span id="icon-import-json" aria-hidden="true"></span>
+          <input type="file" id="input-import-json" accept=".json,application/json" />
+        </label>
+        <button type="button" class="btn btn-icon" id="btn-reset-demo" title="Reset to 12-page demo" aria-label="Reset project to 12-page demo"></button>
+        <button type="button" class="btn btn-icon" id="btn-theme-toggle" title="Toggle dark/light theme" aria-label="Toggle dark and light theme"></button>
+      </div>
+    </div>
+
+    <!-- 6-Step Wizard Tab Rail -->
+    <nav class="step-nav" role="tablist" aria-label="Book Production Steps">
+      <button type="button" class="step-tab" role="tab" id="tab-btn-manuscript" data-step="0" aria-selected="true" aria-controls="panel-manuscript">
+        <span class="step-tab-num">01</span>
+        <span class="step-tab-label">Manuscript</span>
+      </button>
+      <button type="button" class="step-tab" role="tab" id="tab-btn-layout" data-step="1" aria-selected="false" aria-controls="panel-layout">
+        <span class="step-tab-num">02</span>
+        <span class="step-tab-label">Layout</span>
+      </button>
+      <button type="button" class="step-tab" role="tab" id="tab-btn-interior" data-step="2" aria-selected="false" aria-controls="panel-interior">
+        <span class="step-tab-num">03</span>
+        <span class="step-tab-label">Interior</span>
+      </button>
+      <button type="button" class="step-tab" role="tab" id="tab-btn-cover" data-step="3" aria-selected="false" aria-controls="panel-cover">
+        <span class="step-tab-num">04</span>
+        <span class="step-tab-label">Cover</span>
+      </button>
+      <button type="button" class="step-tab" role="tab" id="tab-btn-listing" data-step="4" aria-selected="false" aria-controls="panel-listing">
+        <span class="step-tab-num">05</span>
+        <span class="step-tab-label">Listing</span>
+      </button>
+      <button type="button" class="step-tab" role="tab" id="tab-btn-preflight" data-step="5" aria-selected="false" aria-controls="panel-preflight">
+        <span class="step-tab-num">06</span>
+        <span class="step-tab-label">Preflight</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- Cancellable Progress Bar Dock -->
+  <div class="progress-dock" id="progress-dock" hidden>
+    <div class="progress-card" role="status" aria-live="polite">
+      <div class="progress-info">
+        <div class="progress-label" id="progress-label">Preparing print engine...</div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-danger" id="btn-cancel-task">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Main Step Panels -->
+  <main class="workspace">
+    <!-- ==================== STEP 1: MANUSCRIPT ==================== -->
+    <section class="tab-panel is-active" id="panel-manuscript" role="tabpanel" aria-labelledby="tab-btn-manuscript">
+      <div class="panel-header">
+        <p class="panel-eyebrow">Step 1 of 6</p>
+        <h2 class="panel-title">Manuscript &amp; Structure</h2>
+        <p class="panel-desc">Paste prose or upload a .txt / .md draft. Chapters split automatically on lines beginning with <code># </code> or <code>Chapter N</code>.</p>
+      </div>
+
+      <div class="stats-strip">
+        <div class="stat-box">
+          <div class="stat-value" id="stat-words">0</div>
+          <div class="stat-label">Words</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="stat-chapters">0</div>
+          <div class="stat-label">Chapters</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="stat-est-pages">0</div>
+          <div class="stat-label">Est. Pages (Even)</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Book Identity</h3>
+        <div class="field-grid cols-2">
+          <div class="field">
+            <label for="meta-title">Book Title</label>
+            <input type="text" id="meta-title" maxlength="120" placeholder="Enter book title" />
+          </div>
+          <div class="field">
+            <label for="meta-author">Author / Imprint</label>
+            <input type="text" id="meta-author" maxlength="100" placeholder="Author full name" />
+          </div>
+          <div class="field">
+            <label for="meta-subtitle">Subtitle (Optional)</label>
+            <input type="text" id="meta-subtitle" maxlength="120" placeholder="Descriptive subtitle" />
+          </div>
+          <div class="field">
+            <label for="meta-isbn">ISBN (Optional, for Copyright page)</label>
+            <input type="text" id="meta-isbn" maxlength="32" placeholder="979-8-000000-00-0" />
+          </div>
+        </div>
+      </div>
+
+      <div class="split-grid">
+        <div class="card">
+          <div class="card-title">
+            <span>Manuscript Text</span>
+            <div class="btn-row">
+              <label class="btn file-btn">
+                <span id="icon-upload-ms" aria-hidden="true"></span>
+                <span>Upload .txt / .md</span>
+                <input type="file" id="input-manuscript-file" accept=".txt,.md,.markdown,text/plain,text/markdown" />
+              </label>
+              <button type="button" class="btn" id="btn-load-24p">Load 24-Page Sample</button>
+              <button type="button" class="btn btn-danger" id="btn-clear-ms">Clear</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="manuscript-textarea" class="field-hint">Supports English and Hindi (Devanagari), subheadings (<code>## </code>), bullets (<code>- </code>), and scene breaks (<code>* * *</code>).</label>
+            <textarea id="manuscript-textarea" class="manuscript-editor" spellcheck="true" placeholder="# Chapter 1: Your Opening Chapter&#10;&#10;Begin writing or paste your manuscript here..."></textarea>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>Auto-Detected Chapters</span>
+            <span class="field-hint" id="script-badge">Latin Typography</span>
+          </div>
+          <ul class="chapter-list" id="chapter-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== STEP 2: LAYOUT ==================== -->
+    <section class="tab-panel" id="panel-layout" role="tabpanel" aria-labelledby="tab-btn-layout">
+      <div class="panel-header">
+        <p class="panel-eyebrow">Step 2 of 6</p>
+        <h2 class="panel-title">Interior Typography &amp; Trim</h2>
+        <p class="panel-desc">Configure KDP trim dimensions, paper stock, progressive gutter rules, bundled OFL fonts, and inspect the live paginated proof.</p>
+      </div>
+
+      <div class="split-grid">
+        <div>
+          <div class="card">
+            <h3 class="card-title">Page &amp; Type Controls</h3>
+            <div class="field-grid cols-2">
+              <div class="field">
+                <label for="layout-trim">Trim Size</label>
+                <select id="layout-trim">
+                  <option value="6x9">6" x 9" — US Trade</option>
+                  <option value="5.5x8.5">5.5" x 8.5" — Digest</option>
+                  <option value="5.25x8">5.25" x 8" — Compact Novel</option>
+                  <option value="8.5x11">8.5" x 11" — Letter Workbook</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="layout-paper">Paper Stock &amp; Ink</label>
+                <select id="layout-paper">
+                  <option value="cream">Black Ink / Cream Paper</option>
+                  <option value="white">Black Ink / White Paper</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="layout-font">Bundled OFL Typeface</label>
+                <select id="layout-font">
+                  <option value="eb-garamond">EB Garamond (Literary Serif)</option>
+                  <option value="inter">Inter (Modern Sans)</option>
+                  <option value="noto-devanagari">Noto Sans Devanagari (Hindi + Latin)</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="layout-chapter-style">Chapter Opener Style</label>
+                <select id="layout-chapter-style">
+                  <option value="classic">Classic Literary (Centered Rule)</option>
+                  <option value="modern">Modern Minimal (Flush Left)</option>
+                  <option value="ornate">Editorial Archival (Diamond Rule)</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="layout-fontsize">Font Size (pt)</label>
+                <select id="layout-fontsize">
+                  <option value="10">10 pt (Compact)</option>
+                  <option value="10.5">10.5 pt (Trade Fiction)</option>
+                  <option value="11">11 pt (Standard Trade)</option>
+                  <option value="11.5">11.5 pt (Relaxed)</option>
+                  <option value="12">12 pt (Large Trade)</option>
+                  <option value="13">13 pt (Accessible Print)</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="layout-leading">Line Leading</label>
+                <select id="layout-leading">
+                  <option value="1.3">1.30x (Tight)</option>
+                  <option value="1.38">1.38x (Book Classic)</option>
+                  <option value="1.42">1.42x (Balanced)</option>
+                  <option value="1.5">1.50x (Generous)</option>
+                  <option value="1.6">1.60x (Open Air)</option>
+                </select>
+              </div>
+
+              <div class="field" style="grid-column: 1 / -1;">
+                <label for="layout-folio">Page Number Placement</label>
+                <select id="layout-folio">
+                  <option value="bottom-center">Bottom Center</option>
+                  <option value="outer-corners">Outer Bottom Corners (Mirrored)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-grid" style="margin-top: 12px;">
+              <label class="toggle-row" for="layout-bleed">
+                <span class="toggle-text">
+                  <span class="toggle-title">Enable 0.125" Interior Bleed</span>
+                  <span class="toggle-sub">Adds 0.125" top, bottom &amp; outside edge; min outside margin becomes 0.375"</span>
+                </span>
+                <input type="checkbox" id="layout-bleed" />
+              </label>
+
+              <label class="toggle-row" for="layout-dropcaps">
+                <span class="toggle-text">
+                  <span class="toggle-title">Chapter Opening Drop Caps</span>
+                  <span class="toggle-sub">Three-line sunken initial on each chapter's opening paragraph</span>
+                </span>
+                <input type="checkbox" id="layout-dropcaps" />
+              </label>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title">Computed KDP Interior Spec</h3>
+            <table class="spec-table" aria-label="Interior layout specifications">
+              <tbody id="interior-spec-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>Live Canvas Page Proof</span>
+            <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;cursor:pointer;min-height:36px;">
+              <input type="checkbox" id="preview-guides-toggle" checked style="width:18px;height:18px;accent-color:var(--accent);" />
+              <span>Margin &amp; Bleed Guides</span>
+            </label>
+          </div>
+
+          <div class="preview-well" id="interior-preview-well">
+            <canvas id="interior-preview-canvas" class="preview-canvas" width="320" height="480"></canvas>
+            <div class="preview-toolbar">
+              <button type="button" class="btn btn-icon" id="btn-prev-page" aria-label="Previous page"></button>
+              <div class="preview-page-badge" id="preview-page-label">Page 1 of 12</div>
+              <button type="button" class="btn btn-icon" id="btn-next-page" aria-label="Next page"></button>
+            </div>
+            <div class="field" style="width: 100%;">
+              <label for="preview-jump-select" class="field-hint">Jump to section</label>
+              <select id="preview-jump-select"></select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== STEP 3: INTERIOR PDF ==================== -->
+    <section class="tab-panel" id="panel-interior" role="tabpanel" aria-labelledby="tab-btn-interior">
+      <div class="panel-header">
+        <p class="panel-eyebrow">Step 3 of 6</p>
+        <h2 class="panel-title">Print-Ready Interior PDF</h2>
+        <p class="panel-desc">Subsetted OFL fonts embedded, automatic Table of Contents numbered after pagination, recto chapter openings, even page parity, and zero crop marks.</p>
+      </div>
+
+      <div id="interior-ready-banner" class="banner banner-pass"></div>
+
+      <div class="split-grid">
+        <div class="card">
+          <h3 class="card-title">Interior File Summary</h3>
+          <table class="spec-table">
+            <tbody id="interior-pdf-summary"></tbody>
+          </table>
+          <div class="btn-row" style="margin-top: 16px;">
+            <button type="button" class="btn btn-primary" id="btn-download-interior"></button>
+            <button type="button" class="btn" id="btn-regen-interior"></button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">Auto-Generated Table of Contents</h3>
+          <p class="field-hint" style="margin-top:0;margin-bottom:10px;">Verified post-pagination recto page numbers embedded on Page 3:</p>
+          <ul class="chapter-list" id="toc-preview-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== STEP 4: COVER ==================== -->
+    <section class="tab-panel" id="panel-cover" role="tabpanel" aria-labelledby="tab-btn-cover">
+      <div class="panel-header">
+        <p class="panel-eyebrow">Step 4 of 6</p>
+        <h2 class="panel-title">Full-Wrap KDP Cover PDF</h2>
+        <p class="panel-desc">Back cover, precision spine, and front cover assembled onto a single press-ready PDF sheet with 0.125" outer bleed and a clear 2" x 1.2" barcode box.</p>
+      </div>
+
+      <div id="cover-barcode-warning" class="banner banner-fail" hidden></div>
+      <div id="cover-spine-notice" class="banner banner-warn"></div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Live Wraparound Spread (Back · Spine · Front)</span>
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;cursor:pointer;min-height:36px;">
+            <input type="checkbox" id="cover-guides-toggle" checked style="width:18px;height:18px;accent-color:var(--accent);" />
+            <span>Trim, Safe &amp; Barcode Guides</span>
+          </label>
+        </div>
+        <div class="preview-well" id="cover-preview-well">
+          <canvas id="cover-preview-canvas" class="preview-canvas" width="560" height="400"></canvas>
+        </div>
+        <div class="btn-row" style="margin-top: 14px; justify-content: space-between;">
+          <div class="btn-row">
+            <button type="button" class="btn btn-primary" id="btn-download-cover"></button>
+            <button type="button" class="btn" id="btn-regen-cover"></button>
+          </div>
+          <button type="button" class="btn" id="btn-copy-cover-specs"></button>
+        </div>
+      </div>
+
+      <div class="split-grid">
+        <div class="card">
+          <h3 class="card-title">Template, Palette &amp; Front Artwork</h3>
+          <div class="field-grid cols-2">
+            <div class="field">
+              <label for="cover-template">Typographic Template</label>
+              <select id="cover-template">
+                <option value="meridian">Meridian Editorial (Framed)</option>
+                <option value="horizon">Horizon Band (Color Block)</option>
+                <option value="monograph">Swiss Monograph (Asymmetric)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="cover-palette">Color Palette</label>
+              <select id="cover-palette">
+                <option value="midnight">Midnight Slate &amp; Gold</option>
+                <option value="ivory">Archival Ivory &amp; Ink</option>
+                <option value="forest">Deep Pine &amp; Brass</option>
+                <option value="terracotta">Oxide &amp; Warm Cream</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="cover-font">Cover Typeface</label>
+              <select id="cover-font">
+                <option value="eb-garamond">EB Garamond</option>
+                <option value="inter">Inter</option>
+                <option value="noto-devanagari">Noto Sans Devanagari</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="cover-img-mode">Front Artwork Fit</label>
+              <select id="cover-img-mode">
+                <option value="framed">Framed Inside 0.25" Safe Zone</option>
+                <option value="bleed">Full-Bleed Front Panel</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="btn-row" style="margin-top: 12px;">
+            <label class="btn file-btn">
+              <span id="icon-upload-cover" aria-hidden="true"></span>
+              <span id="lbl-cover-img-text">Upload Front Cover Image</span>
+              <input type="file" id="input-cover-image" accept="image/png,image/jpeg,image/webp" />
+            </label>
+            <button type="button" class="btn btn-danger" id="btn-remove-cover-img" hidden>Remove Artwork</button>
+          </div>
+
+          <div class="field-grid" style="margin-top: 14px;">
+            <div class="field">
+              <label for="cover-back-headline">Back Cover Hook</label>
+              <input type="text" id="cover-back-headline" maxlength="120" />
+            </div>
+            <div class="field">
+              <label for="cover-back-blurb">Back Cover Copy (Automatically kept above 2" x 1.2" barcode)</label>
+              <textarea id="cover-back-blurb" style="min-height: 110px;"></textarea>
+            </div>
+            <div class="field">
+              <label for="cover-author-bio">Back Author Note (Optional)</label>
+              <textarea id="cover-author-bio" style="min-height: 72px;"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">Computed Cover &amp; 300 DPI Press Dimensions</h3>
+          <table class="spec-table">
+            <tbody id="cover-spec-tbody"></tbody>
+          </table>
+
+          <h4 style="font-size:13px;margin:16px 0 8px;">Editable KDP Spine Thickness Constants (in / page)</h4>
+          <div class="field-grid cols-2">
+            <div class="field">
+              <label for="const-spine-white">White Paper (in/page)</label>
+              <input type="number" id="const-spine-white" step="0.000001" min="0.001" max="0.01" />
+            </div>
+            <div class="field">
+              <label for="const-spine-cream">Cream Paper (in/page)</label>
+              <input type="number" id="const-spine-cream" step="0.000001" min="0.001" max="0.01" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== STEP 5: LISTING ==================== -->
+    <section class="tab-panel" id="panel-listing" role="tabpanel" aria-labelledby="tab-btn-listing">
+      <div class="panel-header">
+        <p class="panel-eyebrow">Step 5 of 6</p>
+        <h2 class="panel-title">Amazon KDP Listing &amp; Pricing</h2>
+        <p class="panel-desc">Craft your title hook, 4000-character description, seven 50-character search keywords, store categories, and 60% royalty pricing.</p>
+      </div>
+
+      <div class="split-grid">
+        <div>
+          <!-- Title & Hook Builder -->
+          <div class="card">
+            <div class="card-title">
+              <span>Title &amp; Subtitle Builder</span>
+              <span class="char-counter" id="counter-title-combo">0 / 200 combined</span>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <div class="field-label-row">
+                  <label for="listing-title">Amazon Title</label>
+                  <span class="char-counter" id="counter-listing-title">0 / 120</span>
+                </div>
+                <input type="text" id="listing-title" maxlength="120" />
+              </div>
+
+              <div class="field">
+                <div class="field-label-row">
+                  <label for="listing-subtitle">Amazon Subtitle</label>
+                  <span class="char-counter" id="counter-listing-subtitle">0 / 120</span>
+                </div>
+                <input type="text" id="listing-subtitle" maxlength="120" />
+              </div>
+
+              <div class="field">
+                <label for="listing-hook-picker">Subtitle Hook Pattern</label>
+                <div class="btn-row" style="flex-wrap: nowrap;">
+                  <select id="listing-hook-picker" style="flex: 1;"></select>
+                  <button type="button" class="btn" id="btn-apply-hook">Apply</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4000-Char Description -->
+          <div class="card">
+            <div class="card-title">
+              <span>Book Description</span>
+              <span class="char-counter" id="counter-description">0 / 4000</span>
+            </div>
+            <div class="btn-row" style="margin-bottom: 10px;">
+              <button type="button" class="btn" id="btn-generate-desc">Generate from Book</button>
+              <button type="button" class="btn" id="btn-copy-desc-html">Copy KDP HTML</button>
+            </div>
+            <div class="field">
+              <label for="listing-description" class="field-hint">Preserves clean paragraph breaks and <code>- </code> bullet lines.</label>
+              <textarea id="listing-description" maxlength="4000" style="min-height: 190px;"></textarea>
+            </div>
+          </div>
+
+          <!-- Categories -->
+          <div class="card">
+            <h3 class="card-title">Store Categories (Up to 3)</h3>
+            <div class="field-grid">
+              <div class="field">
+                <label for="listing-cat-1">Primary Category</label>
+                <select id="listing-cat-1"></select>
+              </div>
+              <div class="field">
+                <label for="listing-cat-2">Secondary Category</label>
+                <select id="listing-cat-2"></select>
+              </div>
+              <div class="field">
+                <label for="listing-cat-3">Third Category (Optional)</label>
+                <select id="listing-cat-3"></select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <!-- 7 Keywords -->
+          <div class="card">
+            <div class="card-title">
+              <span>7 Amazon Search Keywords</span>
+              <button type="button" class="btn" id="btn-suggest-keywords">Suggest 7</button>
+            </div>
+            <div id="keyword-warning-banner" class="banner banner-warn" hidden></div>
+            <div class="keyword-grid" id="keyword-slots-container"></div>
+          </div>
+
+          <!-- Editable Pricing & Royalty Table -->
+          <div class="card">
+            <h3 class="card-title">Pricing &amp; 60% Royalty Calculator</h3>
+            <div id="pricing-warning-banner" class="banner banner-fail" hidden></div>
+            <table class="spec-table" aria-label="Editable KDP pricing calculator">
+              <tbody>
+                <tr>
+                  <td><label for="price-list-input">List Price (USD)</label></td>
+                  <td><input type="number" id="price-list-input" step="0.01" min="0.99" max="250" /></td>
+                </tr>
+                <tr>
+                  <td><label for="price-fixed-input">Fixed Print Cost ($)</label></td>
+                  <td><input type="number" id="price-fixed-input" step="0.01" min="0" max="50" /></td>
+                </tr>
+                <tr>
+                  <td><label for="price-perpage-input">Per-Page Cost ($)</label></td>
+                  <td><input type="number" id="price-perpage-input" step="0.001" min="0" max="1" /></td>
+                </tr>
+                <tr>
+                  <td><label for="price-royalty-input">Royalty Rate (%)</label></td>
+                  <td><input type="number" id="price-royalty-input" step="1" min="10" max="100" /></td>
+                </tr>
+                <tr>
+                  <th>Final Page Count</th>
+                  <td id="price-out-pages">12</td>
+                </tr>
+                <tr>
+                  <th>KDP Printing Cost</th>
+                  <td id="price-out-printcost">$0.99</td>
+                </tr>
+                <tr>
+                  <th>Minimum Allowed List Price</th>
+                  <td id="price-out-minprice">$1.66</td>
+                </tr>
+                <tr>
+                  <th>Gross Royalty Share</th>
+                  <td id="price-out-gross">$7.79</td>
+                </tr>
+                <tr>
+                  <th><strong>Estimated Per-Copy Profit</strong></th>
+                  <td><strong id="price-out-profit">$6.80</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Plain-English Metadata Block -->
+          <div class="card">
+            <div class="card-title">
+              <span>Plain-English Metadata Sheet</span>
+              <button type="button" class="btn btn-primary" id="btn-copy-metadata"></button>
+            </div>
+            <pre class="metadata-pre" id="metadata-block-preview"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== STEP 6: PREFLIGHT ==================== -->
+    <section class="tab-panel" id="panel-preflight" role="tabpanel" aria-labelledby="tab-btn-preflight">
+      <div class="panel-header">
+        <p class="panel-eyebrow">Step 6 of 6</p>
+        <h2 class="panel-title">Binary PDF Preflight Inspection</h2>
+        <p class="panel-desc">Parses the actual generated Interior and Cover PDF files in memory to verify MediaBox dimensions, embedded font binary streams, page counts, bleed, and back-cover barcode clearance.</p>
+      </div>
+
+      <div id="preflight-summary-banner" class="banner banner-warn"></div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Inspection Checklist</span>
+          <div class="btn-row">
+            <button type="button" class="btn" id="btn-rerun-preflight"></button>
+            <button type="button" class="btn btn-primary" id="btn-regen-both-preflight">Regenerate Both &amp; Check</button>
+          </div>
+        </div>
+        <ul class="preflight-list" id="preflight-list"></ul>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sticky Bottom Step Action Bar -->
+  <footer class="bottom-bar">
+    <div class="bottom-bar-inner">
+      <button type="button" class="btn" id="btn-step-prev"></button>
+      <button type="button" class="btn btn-primary bottom-primary-btn" id="btn-step-primary"></button>
+    </div>
+  </footer>
+
+  <!-- Toast Feedback -->
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- Accessible Confirmation Modal -->
+  <div class="modal-backdrop" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" hidden>
+    <div class="modal-card">
+      <h3 class="modal-title" id="confirm-modal-title">Confirm Action</h3>
+      <p class="modal-body" id="confirm-modal-body"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="btn-confirm-cancel">Cancel</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-accept">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
